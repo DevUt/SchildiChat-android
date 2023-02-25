@@ -1,0 +1,35 @@
+name: APK Build
+on: 
+  push:
+    branches:
+      - android-13 
+
+  pull_request:
+  workflow_dispatch:
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Make gradelw executable
+        run: chmod +x ./gradlew
+      - name: Build the app
+        uses: sparkfabrik/android-build-action@v1.3.4
+        with:
+          project-path: .
+          gradle-task: assembleRelease
+      - name: Sign apk
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "30.0.2"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: apk-release.apk
+          path: ${{env.SIGNED_RELEASE_FILE}}
